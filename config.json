@@ -1,0 +1,18 @@
+{
+    "version": "v0.1",
+    "workingDir": "models",
+    "?device": "cpu或者gpu",
+    "device": "gpu",
+    "models": [
+        {
+            "net": "faceCls.net",
+            "weight": "faceCls.weight",
+            "params": {
+                "thres": [
+                    0.4,
+                    0.6
+                ]
+            }
+        }
+    ]
+}
