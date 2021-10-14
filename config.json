@@ -1,18 +1,14 @@
 {
     "version": "v0.1",
+    "?workingDir": "模型文件夹路径",
     "workingDir": "models",
     "?device": "cpu或者gpu",
     "device": "gpu",
-    "models": [
-        {
-            "net": "faceCls.net",
-            "weight": "faceCls.weight",
-            "params": {
-                "thres": [
-                    0.4,
-                    0.6
-                ]
-            }
-        }
-    ]
+    "recog": {
+        "enable": true,
+        "net": "faceCls.net",
+        "weight": "faceCls.weight",
+        "params": [0.4, 0.6]
+    },
+    "img_dir": ""
 }
