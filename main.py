@@ -1,94 +1,63 @@
-from dataclasses import dataclass
-from pathlib import Path
-import os
+from typing import Tuple
 
 import torch
 import cv2
+import numpy as np
+
+from model import FaceClassifier
 
 
-from utils import json2dict
+def preprocess(img_path: str) -> Tuple[torch.Tensor, dict]:
+    img = cv2.imread(img_path)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    h, w, c = img.shape
+    img = torch.tensor(img, dtype=torch.float32)
+    img = img.permute(2, 0, 1)
+    img = img.unsqueeze(0)
+
+    img_meta = {
+        'img_path': img_path,
+        'height': h,
+        'width': w,
+        'channel': c,
+    }
+
+    return img, img_meta
 
 
-@dataclass
-class Cntlinf:
-    initPath: str
+def postprocess(bimap: torch.Tensor, img_meta: dict) -> int:
+    bimap = bimap.squeeze(0)
+    cls = bimap.argmax(0)
+    return int(cls)
 
 
-@dataclass
-class ClsDiaginf:
-    path: str
-    _option: list
-    W: int
-    H: int
-    C: int
-    cls: int  # 0无人脸，1有人脸，2不确定
-
-
-def uniface_init(cntlinf: Cntlinf):
-    config = json2dict(cntlinf.initPath)
-
-    workingDir = config['workingDir']
-    models_info = config['recog']
-    device = ('cuda'
-              if config['device'] == 'gpu' and torch.cuda.is_available()
-              else 'cpu')
-
-    net_path = f'{workingDir}/{models_info["net"]}'
-    weight_path = f'{workingDir}/{models_info["weight"]}'
-    params = models_info['params']
-    model: torch.nn.Module = torch.load(net_path)
-    model.load_state_dict(weight_path)
-    model.eval()
-    model = model.to(device)
-
-    model_ = [
-        model,
-        params,
-    ]
-
-    return model_
-
-
-def uniface_uninitAll(models):
-    # TODO: 清理内存
+def save_result(cls: int, img_path: str):
     ...
 
 
-def recog_diag(diag: ClsDiaginf, model):
-    img = cv2.imread(diag)
-    diag.H, diag.W, diag.C = img.shape
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    img = torch.tensor(img, dtype=torch.float32)
-    img = img.cuda()
-    img = img.permute(2, 0, 1)
-    img = img.unsqueeze(0)
-    pred = model(img).squeeze(0)
-    thress = diag._option
-    if pred[1] >= thress[1]:
-        diag.cls = 1
-    elif pred[1] < thress[0]:
-        diag.cls = 0
-    else:
-        diag.cls = 2
-
-    return diag
-
-
 if __name__ == '__main__':
-    # get imgs dir
-    config_path = './config.json'
-    config = json2dict(config_path)
-    img_dir = config['img_dir']
+    weight_path = './models/faceCla.weight'
+    img_path = './000.jpg'
 
-    cntl_inf = Cntlinf(config_path)
+    print('loading model.')
 
-    model, params = uniface_init(cntl_inf)
+    device = 'cpu'
+    net = FaceClassifier()
+    weight = torch.load(weight_path)
+    net.load_state_dict(weight)
 
-    diags = []
+    net.eval().to(device)
 
-    for img_path in Path(img_dir).glob('*'):
-        diag = ClsDiaginf(str(img_path), params)
-        diag = recog_diag(diag, model)
-        diags.append(diag)
+    print('preprocess data.')
 
-    uniface_uninitAll()
+    img_tensor, img_meta = preprocess(img_path)
+    img_tensor.to(device)
+
+    print('inference')
+    bimap = net(img_tensor)
+
+    print("postprocess.")
+
+    cls = postprocess(bimap, img_meta)
+
+    save_result(cls, img_path)
