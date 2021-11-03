@@ -9,6 +9,7 @@ from model import FaceClassifier
 
 def preprocess(img_path: str) -> Tuple[torch.Tensor, dict]:
     img = cv2.imread(img_path)
+    img = cv2.resize(img, (300, 300))
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     h, w, c = img.shape
     img = torch.tensor(img, dtype=torch.float32)
@@ -37,7 +38,7 @@ def save_result(cls: int, img_path: str):
 
 if __name__ == '__main__':
     weight_path = './models/faceCla.weight'
-    img_path = './000.jpg'
+    img_path = './2021-11-02 19-13-07 的屏幕截图.png'
 
     print('loading model.')
 
@@ -55,9 +56,9 @@ if __name__ == '__main__':
 
     print('inference')
     bimap = net(img_tensor)
-
     print("postprocess.")
 
     cls = postprocess(bimap, img_meta)
+    print(cls)
 
     save_result(cls, img_path)
