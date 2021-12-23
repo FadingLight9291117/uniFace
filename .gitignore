@@ -1,6 +1,7 @@
 __pycache__
 
-models
-
-**/*.jpg   
+weights
+sample
 dataset
+results
+.idea

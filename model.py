@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.models import resnet50
-# from torchvision.models.mobilenetv2 import mobilenet_v2
+from torchvision.models.mobilenetv2 import mobilenet_v2
 from mobilenetv2 import mobilenet_v2
 
 
