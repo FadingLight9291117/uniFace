@@ -1,4 +1,5 @@
 from typing import Tuple
+from pathlib import Path
 
 import torch
 import cv2
@@ -37,8 +38,12 @@ def save_result(cls: int, img_path: str):
 
 
 if __name__ == '__main__':
-    weight_path = './models/faceCla.weight'
-    img_path = './2021-11-02 19-13-07 的屏幕截图.png'
+    weight_path = './models/mobilnet_FINAL.pth'
+    img_dir = './pics'
+
+    img_paths = Path(img_dir).glob('*')
+
+    img_path = './pics/000.jpg'
 
     print('loading model.')
 
@@ -50,13 +55,14 @@ if __name__ == '__main__':
     net.eval().to(device)
 
     print('preprocess data.')
-
+    # for img_path in img_paths:
+    img_path = str(img_path)
     img_tensor, img_meta = preprocess(img_path)
     img_tensor.to(device)
 
-    print('inference')
+    # print('inference')
     bimap = net(img_tensor)
-    print("postprocess.")
+    # print("postprocess.")
 
     cls = postprocess(bimap, img_meta)
     print(cls)
