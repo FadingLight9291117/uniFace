@@ -1,4 +1,5 @@
 from typing import Tuple
+import time
 import itertools
 from pathlib import Path
 import shutil
@@ -52,18 +53,13 @@ def save_result(cls: int, img_path: str):
                     f'result3/0/{dir_name}_{file_name}')
 
 
-if __name__ == '__main__':
+def main():
     weight_path = 'weights/retinaface/mobilenet0.25_Final.pth'
+    img_dir = '/home/clz/dataset/FACE_LYG_2021_12_23/'
 
-    img_paths = [
-        '/home/clz/dataset/人脸2021_12_23/face/1',
-        '/home/clz/dataset/人脸2021_12_23/face/2',
-        '/home/clz/dataset/人脸2021_12_23/face/3'
-    ]
-    img_paths = itertools.chain(*[Path(i).glob('*') for i in img_paths])
+    img_paths = Path(img_dir).glob('*')
 
     print('loading model.')
-
     device = 'cpu'
     net = RetinaFace(cfg=cfg_mnet, phase='test')
     weight = torch.load(weight_path)
@@ -81,3 +77,51 @@ if __name__ == '__main__':
         cls = postprocess(bimap, img_meta)
         print(cls)
         save_result(cls, img_path)
+
+
+if __name__ == '__main__':
+    weight_path = 'weights/retinaface/mobilenet0.25_Final.pth'
+    img_dir = '/home/clz/dataset/FACE_LYG_2021_12_23/'
+
+    img_paths = list(Path(img_dir).glob('*'))
+
+    print('loading model.')
+    device = 'cpu'
+    net = RetinaFace(cfg=cfg_mnet, phase='test')
+    weight = torch.load(weight_path)
+    net.load_state_dict(weight)
+    net = net.eval().to(device)
+
+    img1s = []
+    img0s = []
+    tb = time.time()
+    for img_path in img_paths:
+        img_path = str(img_path)
+        # print('preprocess data.')
+        img_tensor, img_meta = preprocess(img_path)
+        img_tensor = img_tensor.to(device)
+        # print('inference')
+        bimap = net(img_tensor)
+        # print("postprocess.")
+        cls = postprocess(bimap, img_meta)
+        # print(cls)
+        # save_result(cls, img_path)
+        if cls == 0:
+            img0s.append(img_path)
+        else:
+            img1s.append(img_path)
+    te = time.time()
+    print(len(img0s), len(img1s))
+    print('time:', (te - tb) / len(img_paths))
+
+    # save
+    save_path = Path('./results/detect')
+    save_path0 = save_path / '0'
+    save_path1 = save_path / '1'
+    save_path0.mkdir(exist_ok=True, parents=True)
+    save_path1.mkdir(exist_ok=True, parents=True)
+
+    for i in img0s:
+        shutil.copy(i, save_path0)
+    for j in img1s:
+        shutil.copy(j, save_path1)
