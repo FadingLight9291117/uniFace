@@ -11,8 +11,13 @@ import numpy as np
 from model import FaceClassifier
 
 
-def preprocess(img_path: str) -> Tuple[torch.Tensor, dict]:
+def preprocess(img_path: str, roi=None) -> Tuple[torch.Tensor, dict]:
     img = cv2.imread(img_path)
+
+    if roi:
+        x1, y1, x2, y2 = roi
+        img = img[y1:y2, x1:x2]
+
     img = cv2.resize(img, (300, 300))
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     h, w, c = img.shape
