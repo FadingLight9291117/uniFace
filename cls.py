@@ -2,13 +2,11 @@ from typing import Tuple
 import time
 from pathlib import Path
 import shutil
-import itertools
 
 import torch
 import cv2
-import numpy as np
 
-from model import FaceClassifier
+from faceclassifier.faceclassifier import FaceClassifier
 
 
 def preprocess(img_path: str, roi=None) -> Tuple[torch.Tensor, dict]:
